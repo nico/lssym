@@ -1,16 +1,58 @@
 A toy program to teach myself more about the mach-o file format. Right now,
-it roughly does what `nm` does, but worse.
+it roughly does what `dsymutil -s` does (which is a bit more than `nm`), but
+worse.
 
-* `dwarfdump` doesn't list `nlist` symbols
-* `dsymutil` only works with linked debug info (hm, `dsymutil -s`)?
-* `nm` is pretty cool but has no symbol sizes
-* nlists are pretty hidden
-* `otool -l` shows LC_DYLD_INFO_ONLY,nsyms for more than nm has output (maybe?)
-* Also `otool -l` LC_DYSYMTAB
-* Not clear if `nm` prints nlist or dwarf or what
+Demo
+----
+
+But one can already see interesting things with this tool.
+
+See symbols in `lssym` (like with `nm`, but with some `otool -l` thrown in): 
+
+    clang -o lssym lssym.c -Wall 
+    ./lssym lssym
+
+See what's left after stripping:
+
+    strip lssym
+    ./lssym lssym
+
+(Compare with the output of `nm lssym` and `dsymutil -s lssym` in both cases.
+Note that `strip` adds a symbol that looks like
+
+    radr://5614542    N_STAB 3c    n_sect 000 n_desc 0x0000    n_value 0x5614542
+
+I wonder what that bug is. `nm` doesn't list it because `nm` only lists symbols,
+and this is a stabs debug info entry.)
+
+Now build with debug info:
+
+    clang -o lssym lssym.c -Wall -gdwarf-2
+    ./lssym lssym
+
+Note that the file now includes stabs debug info, even though we asked for
+dwarf. `dsymutil lssym` complains about a temporary `.o` file. Let's break up
+compile and link step:
+
+    clang -c lssym.c -Wall -gdwarf-2
+    clang -o lssym lssym.o
+    dsymutil lssym
+    ./lssym lssym         # Still contains stabs entries.
+    dwarfdump lssym.dSYM  # But this finds dwarf info now, too.
+    dwarfdump lssym.o     # So does this.
+    dwarfdump lssym       # This doesn't.
+
+
+Related tools
+-------------
+
+* `dwarfdump` shows dwarf debug data
+* `dsymutil` can show symbol tables (`-s`) and link dwarf debug info from .o
+  files into a single .dSYM file.
+* `nm` shows references symbols; a subset of `dsymutil -s` output.
+* `otool -l` all load commands in a mach-o file.
+* `dwarfdump --file-stats lssym`
+* `atos`
+* `dwarfdump --lookup`
 
 http://wiki.dwarfstd.org/index.php?title=Apple's_%22Lazy%22_DWARF_Scheme
-
-Other tools that are somewhat similar:
-* `atos`
-* `dwarfdump`'s `--lookup`
