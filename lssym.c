@@ -61,6 +61,29 @@ static void dump_load_dylinker(struct dylinker_command* cmd) {
   printf("  Name: %s\n", ((char*)cmd) + cmd->name.offset);
 }
 
+static void parse_version(
+    uint32_t version, unsigned* major, unsigned* minor, unsigned* dot) {
+  *major = version >> 16;
+  *minor = (version >> 8) & 0xff;
+  *dot = version & 0xff;
+}
+
+static void dump_load_dylib(struct dylib_command* cmd) {
+  struct dylib* dylib = &cmd->dylib;
+
+  unsigned cur_ver, cur_maj, cur_dot;
+  parse_version(dylib->current_version, &cur_ver, &cur_maj, &cur_dot);
+
+  unsigned comp_ver, comp_maj, comp_dot;
+  parse_version(dylib->compatibility_version, &comp_ver, &comp_maj, &comp_dot);
+
+  printf("  Name: %s", ((char*)cmd) + dylib->name.offset);
+  printf("  Timestamp: 0x%x  Version: %u.%u.%u  Compat version: %u.%u.%u\n",
+      dylib->timestamp,
+      cur_ver, cur_maj, cur_dot,
+      comp_ver, comp_maj, comp_dot);
+}
+
 static void dump(struct mach_header* header) {
   uint8_t* data = (uint8_t*)header;
 
@@ -106,7 +129,12 @@ static void dump(struct mach_header* header) {
       case LC_LOAD_DYLINKER: cmdnam = "LC_LOAD_DYLINKER"; break;
       case LC_UUID: cmdnam = "LC_UUID"; break;
       case LC_UNIXTHREAD: cmdnam = "LC_UNIXTHREAD"; break;
+
       case LC_LOAD_DYLIB: cmdnam = "LC_LOAD_DYLIB"; break;
+      case LC_LOAD_WEAK_DYLIB: cmdnam = "LC_LOAD_WEAK_DYLIB"; break;
+      case LC_REEXPORT_DYLIB: cmdnam = "LC_REEXPORT_DYLIB"; break;
+      case LC_LOAD_UPWARD_DYLIB: cmdnam = "LC_LOAD_UPWARD_DYLIB"; break;
+      case LC_LAZY_LOAD_DYLIB: cmdnam = "LC_LAZY_LOAD_DYLIB"; break;
     }
     printf("cmd %s (0x%x), size %d\n", cmdnam, cmd->cmd, cmd->cmdsize);
 
@@ -116,6 +144,13 @@ static void dump(struct mach_header* header) {
         break;
       case LC_LOAD_DYLINKER:
         dump_load_dylinker((struct dylinker_command*)cmd);
+        break;
+      case LC_LOAD_DYLIB:
+      case LC_LOAD_WEAK_DYLIB:
+      case LC_REEXPORT_DYLIB:
+      case LC_LOAD_UPWARD_DYLIB:
+      case LC_LAZY_LOAD_DYLIB:
+        dump_load_dylib((struct dylib_command*)cmd);
         break;
     }
 
