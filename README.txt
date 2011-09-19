@@ -42,6 +42,16 @@ compile and link step:
     dwarfdump lssym.o     # So does this.
     dwarfdump lssym       # This doesn't.
 
+If you don't want `ld` to write stabs info (since you have a dSYM, it's
+pointless, and might slow down the `ld` step), link like this:
+
+    clang -o lssym lssym.o -Wl,-S
+
+If you pass `-Wl,-s` instead, `ld` will claim that `-s` is obsolete and ignored,
+but still still strip all symbols that can be stripped (after first writing them
+as far as I understand -- so that probably doesn't help with linker
+performance).
+
 
 Related tools
 -------------
