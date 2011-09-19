@@ -57,6 +57,10 @@ static void dump_symtab(struct symtab_command* symtab, uint8_t* data) {
   }
 }
 
+static void dump_load_dylinker(struct dylinker_command* cmd) {
+  printf("  Name: %s\n", ((char*)cmd) + cmd->name.offset);
+}
+
 static void dump(struct mach_header* header) {
   uint8_t* data = (uint8_t*)header;
 
@@ -93,11 +97,25 @@ static void dump(struct mach_header* header) {
   printf("%d load commands\n", header->ncmds);
   for (int i = 0; i < header->ncmds; ++i) {
     struct load_command* cmd = (struct load_command*)data;
-    printf("cmd 0x%x, size %d\n", cmd->cmd, cmd->cmdsize);
+    const char* cmdnam = "Unknown";
+    switch (cmd->cmd & ~LC_REQ_DYLD) {
+      case LC_SEGMENT_64: cmdnam = "LC_SEGMENT_64"; break;
+      case LC_DYLD_INFO: cmdnam = "LC_DYLD_INFO"; break;
+      case LC_SYMTAB: cmdnam = "LC_SYMTAB"; break;
+      case LC_DYSYMTAB: cmdnam = "LC_DYSYMTAB"; break;
+      case LC_LOAD_DYLINKER: cmdnam = "LC_LOAD_DYLINKER"; break;
+      case LC_UUID: cmdnam = "LC_UUID"; break;
+      case LC_UNIXTHREAD: cmdnam = "LC_UNIXTHREAD"; break;
+      case LC_LOAD_DYLIB: cmdnam = "LC_LOAD_DYLIB"; break;
+    }
+    printf("cmd %s (0x%x), size %d\n", cmdnam, cmd->cmd, cmd->cmdsize);
 
     switch(cmd->cmd) {
       case LC_SYMTAB:
         dump_symtab((struct symtab_command*)cmd, (uint8_t*)header);
+        break;
+      case LC_LOAD_DYLINKER:
+        dump_load_dylinker((struct dylinker_command*)cmd);
         break;
     }
 
