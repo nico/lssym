@@ -31,12 +31,29 @@ static void dump_symtab(struct symtab_command* symtab, uint8_t* data) {
   char* strtab = (char*)(data + symtab->stroff);
 
   for (int i = 0; i < symtab->nsyms; ++i, nlist++) {
-    printf("%s 0x%x %d 0x%x 0x%llx\n",
-        nlist->n_un.n_strx ? strtab + nlist->n_un.n_strx : "(empty)",
-        nlist->n_type,
-        nlist->n_sect,
-        nlist->n_desc,
-        nlist->n_value);
+    printf("%30s", nlist->n_un.n_strx ? strtab + nlist->n_un.n_strx : "(null)");
+
+    printf("  ");
+    if (nlist->n_type & N_STAB)
+      printf("  N_STAB %x", nlist->n_type);
+    else {
+      printf("%6s", nlist->n_type & N_PEXT ? "N_PEXT" : "");
+      printf("%6s", nlist->n_type & N_EXT ? "N_EXT" : "");
+      printf(" type ");
+      switch (nlist->n_type & N_TYPE) {
+        case N_UNDF: printf("N_UNDF"); break;
+        case N_ABS:  printf("N_ABS "); break;
+        case N_SECT: printf("N_SECT"); break;
+        case N_PBUD: printf("N_PBUD"); break;
+        case N_INDR: printf("N_INDR -> %s", strtab + nlist->n_value); break;
+        default: printf("%x", nlist->n_type & N_TYPE); break;
+      }
+    }
+
+    printf("    n_sect %03d", nlist->n_sect);
+    printf(" n_desc 0x%04x", nlist->n_desc);
+    printf("    n_value 0x%llx", nlist->n_value);
+    printf("\n");
   }
 }
 
@@ -54,6 +71,23 @@ static void dump(struct mach_header* header) {
 
   if (header->magic != MH_MAGIC_64)
     fatal("unexpected magic %x\n", header->magic);
+
+  printf("Filetype: ");
+  switch(header->filetype) {
+    case MH_OBJECT: printf("MH_OBJECT"); break;
+    case MH_EXECUTE: printf("MH_EXECUTE"); break;
+    case MH_FVMLIB: printf("MH_FVMLIB"); break;
+    case MH_CORE: printf("MH_CORE"); break;
+    case MH_PRELOAD: printf("MH_PRELOAD"); break;
+    case MH_DYLIB: printf("MH_DYLIB"); break;
+    case MH_DYLINKER: printf("MH_DYLINKER"); break;
+    case MH_BUNDLE: printf("MH_BUNDLE"); break;
+    case MH_DYLIB_STUB: printf("MH_DYLIB_STUB"); break;
+    case MH_DSYM: printf("MH_DSYM"); break;
+    case MH_KEXT_BUNDLE: printf("MH_KEXT_BUNDLE"); break;
+    default: printf("unknown 0x%x", header->filetype);
+  }
+  printf("\n");
 
   data += sizeof(struct mach_header_64);
   printf("%d load commands\n", header->ncmds);
