@@ -16,6 +16,7 @@ clang -o lssym lssym.c
 #include <mach-o/fat.h>
 #include <mach-o/loader.h>
 #include <mach-o/nlist.h>
+#include <mach-o/stab.h>
 
 static void fatal(const char* msg, ...) {
   va_list args;
@@ -31,12 +32,46 @@ static void dump_symtab(struct symtab_command* symtab, uint8_t* data) {
   char* strtab = (char*)(data + symtab->stroff);
 
   for (int i = 0; i < symtab->nsyms; ++i, nlist++) {
-    printf("%30s", nlist->n_un.n_strx ? strtab + nlist->n_un.n_strx : "(null)");
+    char* name = nlist->n_un.n_strx ? strtab + nlist->n_un.n_strx : "(null)";
+    if (nlist->n_type & N_STAB) {
+      printf("%42s ", name);
 
-    printf("  ");
-    if (nlist->n_type & N_STAB)
-      printf("  N_STAB %x", nlist->n_type);
-    else {
+      char* stab_name = "(unknown stab)";
+      switch (nlist->n_type) {
+        case N_GSYM: stab_name = "N_GSYM"; break;
+        case N_FNAME: stab_name = "N_FNAME"; break;
+        case N_FUN: stab_name = "N_FUN"; break;
+        case N_STSYM: stab_name = "N_STSYM"; break;
+        case N_LCSYM: stab_name = "N_LCSYM"; break;
+        case N_BNSYM: stab_name = "N_BNSYM"; break;
+        case N_OPT: stab_name = "N_OPT"; break;
+        case N_RSYM: stab_name = "N_RSYM"; break;
+        case N_SLINE: stab_name = "N_SLINE"; break;
+        case N_ENSYM: stab_name = "N_ENSYM"; break;
+        case N_SSYM: stab_name = "N_SSYM"; break;
+        case N_SO: stab_name = "N_SO"; break;
+        case N_OSO: stab_name = "N_OSO"; break;
+        case N_LSYM: stab_name = "N_LSYM"; break;
+        case N_BINCL: stab_name = "N_BINCL"; break;
+        case N_SOL: stab_name = "N_SOL"; break;
+        case N_PARAMS: stab_name = "N_PARAMS"; break;
+        case N_VERSION: stab_name = "N_VERSION"; break;
+        case N_OLEVEL: stab_name = "N_OLEVEL"; break;
+        case N_PSYM: stab_name = "N_PSYM"; break;
+        case N_EINCL: stab_name = "N_EINCL"; break;
+        case N_ENTRY: stab_name = "N_ENTRY"; break;
+        case N_LBRAC: stab_name = "N_LBRAC"; break;
+        case N_EXCL: stab_name = "N_EXCL"; break;
+        case N_RBRAC: stab_name = "N_RBRAC"; break;
+        case N_BCOMM: stab_name = "N_BCOMM"; break;
+        case N_ECOMM: stab_name = "N_ECOMM"; break;
+        case N_ECOML: stab_name = "N_ECOML"; break;
+        case N_LENG: stab_name = "N_LENG"; break;
+      }
+
+      printf("  N_STAB %8s (0x%x)", stab_name, nlist->n_type);
+    } else {
+      printf("%30s  ", name);
       printf("%6s", nlist->n_type & N_PEXT ? "N_PEXT" : "");
       printf("%6s", nlist->n_type & N_EXT ? "N_EXT" : "");
       printf(" type ");
