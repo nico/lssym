@@ -38,12 +38,12 @@ static void dump_segment(struct segment_command_64* cmd, uint8_t* data0) {
       (struct section_64*)(((uint8_t*)cmd) + sizeof(struct segment_command_64));
   for (int i = 0; i < cmd->nsects; ++i, ++sect) {
     printf("    ");
-    for (int i = 0; i < sizeof(sect->sectname) && sect->sectname[i]; ++i)
-      printf("%c", sect->sectname[i]);
-    printf(":");
-
     for (int i = 0; i < sizeof(sect->segname) && sect->segname[i]; ++i)
       printf("%c", sect->segname[i]);
+    printf(":");
+
+    for (int i = 0; i < sizeof(sect->sectname) && sect->sectname[i]; ++i)
+      printf("%c", sect->sectname[i]);
     printf("\n");
   }
 }
