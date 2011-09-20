@@ -26,6 +26,28 @@ static void fatal(const char* msg, ...) {
   exit(1);
 }
 
+static void dump_segment(struct segment_command_64* cmd, uint8_t* data0) {
+  uint8_t* data = (uint8_t*)cmd;
+
+  printf("  ");
+  for (int i = 0; i < sizeof(cmd->segname) && cmd->segname[i]; ++i)
+    printf("%c", cmd->segname[i]);
+  printf("\n");
+
+  struct section_64* sect =
+      (struct section_64*)(((uint8_t*)cmd) + sizeof(struct segment_command_64));
+  for (int i = 0; i < cmd->nsects; ++i, ++sect) {
+    printf("    ");
+    for (int i = 0; i < sizeof(sect->sectname) && sect->sectname[i]; ++i)
+      printf("%c", sect->sectname[i]);
+    printf(":");
+
+    for (int i = 0; i < sizeof(sect->segname) && sect->segname[i]; ++i)
+      printf("%c", sect->segname[i]);
+    printf("\n");
+  }
+}
+
 static void dump_symtab(struct symtab_command* symtab, uint8_t* data) {
   struct nlist_64* nlist = (struct nlist_64*)(data + symtab->symoff);
 
@@ -174,6 +196,9 @@ static void dump(struct mach_header* header) {
     printf("cmd %s (0x%x), size %d\n", cmdnam, cmd->cmd, cmd->cmdsize);
 
     switch(cmd->cmd) {
+      case LC_SEGMENT_64:
+        dump_segment((struct segment_command_64*)cmd, (uint8_t*)header);
+        break;
       case LC_SYMTAB:
         dump_symtab((struct symtab_command*)cmd, (uint8_t*)header);
         break;
