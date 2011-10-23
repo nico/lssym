@@ -36,16 +36,8 @@ static void mprintn(const char* m, const char* str, int n) {
   printf("\n");
 }
 
-void dump(void* contents) {
-  if (strncmp(contents, ARMAG, SARMAG)) {
-    uint32_t v = *(uint32_t*)contents;
-    if (v == FAT_MAGIC || v == FAT_CIGAM)
-      fatal("Fat archives are not supported by this tool.\n");
-    fatal("File does not start with '%s'.\n", ARMAG);
-  }
-
-  struct ar_hdr* header = (struct ar_hdr*)(contents + SARMAG);
-  void* rest = contents + SARMAG + sizeof(*header);
+static void dump_obj(struct ar_hdr* header) {
+  void* rest = (void*)(header + 1);
 
   printf("ar_name: ");
   if (strncmp(header->ar_name, AR_EFMT1, sizeof(AR_EFMT1) - 1)) {
@@ -66,6 +58,19 @@ void dump(void* contents) {
   mprintn("ar_fmag: ", header->ar_fmag, sizeof(header->ar_fmag));
   if (strncmp(header->ar_fmag, ARFMAG, sizeof(ARFMAG) - 1))
     fatal("unexpected ar_fmag\n");
+}
+
+static void dump(void* contents) {
+  if (strncmp(contents, ARMAG, SARMAG)) {
+    uint32_t v = *(uint32_t*)contents;
+    if (v == FAT_MAGIC || v == FAT_CIGAM)
+      fatal("Fat archives are not supported by this tool.\n");
+    fatal("File does not start with '%s'.\n", ARMAG);
+  }
+  contents += SARMAG;
+
+  struct ar_hdr* header = (struct ar_hdr*)(contents);
+  dump_obj(header);
 }
 
 int main(int argc, char* argv[]) {
