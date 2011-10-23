@@ -24,9 +24,16 @@ static void fatal(const char* msg, ...) {
   exit(1);
 }
 
-static void nprint(const char* str, int n) {
+static void printn(const char* str, int n) {
   for (int i = 0; i < n && str[i]; ++i)
     printf("%c", str[i]);
+}
+
+static void mprintn(const char* m, const char* str, int n) {
+  printf("%s", m);
+  for (int i = 0; i < n && str[i]; ++i)
+    printf("%c", str[i]);
+  printf("\n");
 }
 
 void dump(void* contents) {
@@ -42,16 +49,23 @@ void dump(void* contents) {
 
   printf("ar_name: ");
   if (strncmp(header->ar_name, AR_EFMT1, sizeof(AR_EFMT1) - 1)) {
-    nprint(header->ar_name, sizeof(header->ar_name));
+    printn(header->ar_name, sizeof(header->ar_name));
     printf("\n");
   } else {
     int len = atoi(header->ar_name + sizeof(AR_EFMT1) - 1);
-    
-    nprint(rest, len);
+    printn(rest, len);
     rest += len;
     printf(" (extended BSD name)\n");
   }
 
+  mprintn("ar_date: ", header->ar_date, sizeof(header->ar_date));
+  mprintn("ar_uid: ", header->ar_uid, sizeof(header->ar_uid));
+  mprintn("ar_gid: ", header->ar_gid, sizeof(header->ar_gid));
+  mprintn("ar_mode: ", header->ar_mode, sizeof(header->ar_mode));
+  mprintn("ar_size: ", header->ar_size, sizeof(header->ar_size));
+  mprintn("ar_fmag: ", header->ar_fmag, sizeof(header->ar_fmag));
+  if (strncmp(header->ar_fmag, ARFMAG, sizeof(ARFMAG) - 1))
+    fatal("unexpected ar_fmag\n");
 }
 
 int main(int argc, char* argv[]) {
