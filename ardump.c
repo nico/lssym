@@ -60,7 +60,14 @@ static void dump_obj(struct ar_hdr* header) {
     fatal("unexpected ar_fmag\n");
 }
 
-static void dump(void* contents) {
+static long long arobj_size(struct ar_hdr* header) {
+  char buf[sizeof(header->ar_size) + 1];
+  memcpy(buf, header->ar_size, sizeof(header->ar_size));
+  buf[sizeof(header->ar_size)] = '\0';
+  return strtoll(buf, NULL, 10) + sizeof(*header);
+}
+
+static void dump(void* contents, void* contents_end) {
   if (strncmp(contents, ARMAG, SARMAG)) {
     uint32_t v = *(uint32_t*)contents;
     if (v == FAT_MAGIC || v == FAT_CIGAM)
@@ -69,8 +76,11 @@ static void dump(void* contents) {
   }
   contents += SARMAG;
 
-  struct ar_hdr* header = (struct ar_hdr*)(contents);
-  dump_obj(header);
+  while (contents < contents_end) {
+    struct ar_hdr* header = (struct ar_hdr*)(contents);
+    dump_obj(header);
+    contents += arobj_size(header);
+  }
 }
 
 int main(int argc, char* argv[]) {
@@ -95,7 +105,7 @@ int main(int argc, char* argv[]) {
   if (ar_contents == MAP_FAILED)
     fatal("Failed to mmap: %d (%s)\n", errno, strerror(errno));
 
-  dump(ar_contents);
+  dump(ar_contents, ar_contents + in_stat.st_size);
 
   munmap(ar_contents, in_stat.st_size);
   close(in_file);
