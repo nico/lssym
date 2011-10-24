@@ -15,6 +15,7 @@ clang -o ardump ardump.c
 
 #include <ar.h>
 #include <mach-o/fat.h>  // FAT_MAGIC
+#include <mach-o/ranlib.h>
 
 static void fatal(const char* msg, ...) {
   va_list args;
@@ -36,19 +37,30 @@ static void mprintn(const char* m, const char* str, int n) {
   printf("\n");
 }
 
+// Returns if the name is a bsd extended name.
+static int arobj_name(struct ar_hdr* header, char** out_name, size_t* out_len) {
+  if (strncmp(header->ar_name, AR_EFMT1, sizeof(AR_EFMT1) - 1)) {
+    *out_name = header->ar_name;
+    *out_len = strnlen(header->ar_name, sizeof(header->ar_name));
+    return 0;
+  }
+  *out_name = (char*)(header + 1);
+  *out_len = atoi(header->ar_name + sizeof(AR_EFMT1) - 1);
+  return 1;
+}
+
 static void dump_obj(struct ar_hdr* header) {
-  void* rest = (void*)(header + 1);
+
+  char* name;
+  size_t name_len;
+  int is_bsd_name = arobj_name(header, &name, &name_len);
 
   printf("ar_name: ");
-  if (strncmp(header->ar_name, AR_EFMT1, sizeof(AR_EFMT1) - 1)) {
-    printn(header->ar_name, sizeof(header->ar_name));
-    printf("\n");
-  } else {
-    int len = atoi(header->ar_name + sizeof(AR_EFMT1) - 1);
-    printn(rest, len);
-    rest += len;
-    printf(" (extended BSD name)\n");
+  printn(name, name_len);
+  if (is_bsd_name) {
+    printf(" (extended BSD name)");
   }
+  printf("\n");
 
   mprintn("ar_date: ", header->ar_date, sizeof(header->ar_date));
   mprintn("ar_uid: ", header->ar_uid, sizeof(header->ar_uid));
