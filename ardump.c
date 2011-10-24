@@ -19,6 +19,13 @@ A tool to dump the table of contents of a ar file (in BSD format).
 #include <mach-o/fat.h>  // FAT_MAGIC
 #include <mach-o/ranlib.h>
 
+static _Bool g_verbose = 0;
+
+static struct option options[] = {
+  { "verbose", no_argument, NULL, 'v' },
+  { }
+};
+
 static void fatal(const char* msg, ...) {
   va_list args;
   va_start(args, msg);
@@ -94,7 +101,8 @@ static void dump_symdefs(
   uint32_t nranlibs = ranlib_len / sizeof(struct ranlib);
   struct ranlib* ranlib = (struct ranlib*)(data + sizeof(uint32_t));
 
-  printf("%d ranlibs\n", nranlibs);
+  if (g_verbose)
+    printf("%d ranlibs\n", nranlibs);
 
   data += ranlib_len + sizeof(uint32_t);
   uint32_t strtab_len = *(uint32_t*)data;
@@ -108,11 +116,17 @@ static void dump_symdefs(
     memcpy(name_zero, name, name_len);
     name_zero[name_len] = '\0';
 
-    printf("ran_strx 0x%x: %s, ran_off 0x%x: %s\n",
-           ranlib->ran_un.ran_strx,
-           strtab + ranlib->ran_un.ran_strx,
-           ranlib->ran_off,
-           name_zero);
+    if (g_verbose) {
+      printf("ran_strx 0x%x: %s, ran_off 0x%x: %s\n",
+             ranlib->ran_un.ran_strx,
+             strtab + ranlib->ran_un.ran_strx,
+             ranlib->ran_off,
+             name_zero);
+    } else {
+      printf("%s %s\n",
+             strtab + ranlib->ran_un.ran_strx,
+             name_zero);
+    }
 
     free(name_zero);
   }
@@ -130,7 +144,8 @@ static void dump(void* contents, void* contents_end) {
 
   while (contents < contents_end) {
     struct ar_hdr* header = (struct ar_hdr*)(contents);
-    dump_obj(header);
+    if (g_verbose)
+      dump_obj(header);
 
     char* name;
     size_t name_len;
@@ -145,10 +160,20 @@ static void dump(void* contents, void* contents_end) {
 }
 
 int main(int argc, char* argv[]) {
-  if (argc != 2) {
-    return 1;
+  int opt;
+  while ((opt = getopt_long(argc, argv, "v", options, NULL)) != -1) {
+    switch (opt) {
+      case 'v':
+        g_verbose = 1;
+        break;
+    }
   }
-  const char* in_name = argv[1];
+  argv += optind;
+  argc -= optind;
+
+  if (argc != 1)
+    fatal("Expected args == 1, got %d\n", argc);
+  const char* in_name = argv[0];
 
   // Read input.
   int in_file = open(in_name, O_RDONLY);
