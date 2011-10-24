@@ -50,7 +50,6 @@ static int arobj_name(struct ar_hdr* header, char** out_name, size_t* out_len) {
 }
 
 static void dump_obj(struct ar_hdr* header) {
-
   char* name;
   size_t name_len;
   int is_bsd_name = arobj_name(header, &name, &name_len);
@@ -79,6 +78,27 @@ static long long arobj_size(struct ar_hdr* header) {
   return strtoll(buf, NULL, 10) + sizeof(*header);
 }
 
+static void dump_symdefs(struct ar_hdr* header, size_t offset) {
+  void* data = (char*)(header + 1) + offset;
+
+  uint32_t ranlib_len = *(uint32_t*)data;
+  uint32_t nranlibs = ranlib_len / sizeof(struct ranlib);
+  struct ranlib* ranlib = (struct ranlib*)(data + sizeof(uint32_t));
+
+  printf("%d ranlibs\n", nranlibs);
+
+  data += ranlib_len + sizeof(uint32_t);
+  uint32_t strtab_len = *(uint32_t*)data;
+  char* strtab = (char*)(data + sizeof(uint32_t));
+
+  for (int i = 0; i < nranlibs; ++i, ++ranlib) {
+    printf("ran_strx 0x%x: %s, ran_off 0x%x\n",
+           ranlib->ran_un.ran_strx,
+           strtab + ranlib->ran_un.ran_strx,
+           ranlib->ran_off);
+  }
+}
+
 static void dump(void* contents, void* contents_end) {
   if (strncmp(contents, ARMAG, SARMAG)) {
     uint32_t v = *(uint32_t*)contents;
@@ -91,6 +111,15 @@ static void dump(void* contents, void* contents_end) {
   while (contents < contents_end) {
     struct ar_hdr* header = (struct ar_hdr*)(contents);
     dump_obj(header);
+
+    char* name;
+    size_t name_len;
+    int is_bsd_name = arobj_name(header, &name, &name_len);
+    if(!strncmp(name, SYMDEF, name_len) ||
+       !strncmp(name, SYMDEF_SORTED, name_len)) {
+      dump_symdefs(header, is_bsd_name ? name_len : 0);
+    }
+
     contents += arobj_size(header);
   }
 }
