@@ -1,5 +1,7 @@
 /*
 clang -o ardump ardump.c
+
+A tool to dump the table of contents of a ar file (in BSD format).
 */
 #include <stdarg.h>
 #include <stdint.h>
