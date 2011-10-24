@@ -83,7 +83,11 @@ static long long arobj_size(struct ar_hdr* header) {
   return strtoll(buf, NULL, 10) + sizeof(*header);
 }
 
-static void dump_symdefs(struct ar_hdr* header, size_t offset) {
+static void dump_symdefs(
+    struct ar_hdr* header, size_t offset, void* file_start) {
+  // Note: This assumes the input file endianness matches
+  // the processor endianness.
+
   void* data = (char*)(header + 1) + offset;
 
   uint32_t ranlib_len = *(uint32_t*)data;
@@ -97,14 +101,25 @@ static void dump_symdefs(struct ar_hdr* header, size_t offset) {
   char* strtab = (char*)(data + sizeof(uint32_t));
 
   for (int i = 0; i < nranlibs; ++i, ++ranlib) {
-    printf("ran_strx 0x%x: %s, ran_off 0x%x\n",
+    char* name;
+    size_t name_len;
+    arobj_name(file_start + ranlib->ran_off, &name, &name_len);
+    char* name_zero = malloc(name_len + 1);
+    memcpy(name_zero, name, name_len);
+    name_zero[name_len] = '\0';
+
+    printf("ran_strx 0x%x: %s, ran_off 0x%x: %s\n",
            ranlib->ran_un.ran_strx,
            strtab + ranlib->ran_un.ran_strx,
-           ranlib->ran_off);
+           ranlib->ran_off,
+           name_zero);
+
+    free(name_zero);
   }
 }
 
 static void dump(void* contents, void* contents_end) {
+  void* file_start = contents;
   if (strncmp(contents, ARMAG, SARMAG)) {
     uint32_t v = *(uint32_t*)contents;
     if (v == FAT_MAGIC || v == FAT_CIGAM)
@@ -122,7 +137,7 @@ static void dump(void* contents, void* contents_end) {
     int is_bsd_name = arobj_name(header, &name, &name_len);
     if(!strncmp(name, SYMDEF, name_len) ||
        !strncmp(name, SYMDEF_SORTED, name_len)) {
-      dump_symdefs(header, is_bsd_name ? name_len : 0);
+      dump_symdefs(header, is_bsd_name ? name_len : 0, file_start);
     }
 
     contents += arobj_size(header);
