@@ -43,7 +43,10 @@ static void mprintn(const char* m, const char* str, int n) {
 static int arobj_name(struct ar_hdr* header, char** out_name, size_t* out_len) {
   if (strncmp(header->ar_name, AR_EFMT1, sizeof(AR_EFMT1) - 1)) {
     *out_name = header->ar_name;
-    *out_len = strnlen(header->ar_name, sizeof(header->ar_name));
+    *out_len = 0;
+    // No strnlen on OS X 10.6 :-/
+    for (int i = 0; header->ar_name[i] && i < sizeof(header->ar_name); ++i)
+      ++*out_len;
     return 0;
   }
   *out_name = (char*)(header + 1);
