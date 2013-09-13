@@ -23,7 +23,7 @@ Note that `strip` adds a symbol that looks like
     radr://5614542    N_STAB 3c    n_sect 000 n_desc 0x0000    n_value 0x5614542
 
 I wonder what that bug is. `nm` doesn't list it because `nm` only lists symbols,
-and this is a stabs debug info entry.)
+and this is a stabs debug info entry which `nm` only shows if you pass `-a`.)
 
 Now build with debug info:
 
