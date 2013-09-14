@@ -64,5 +64,6 @@ Related tools
 * `dwarfdump --file-stats lssym`
 * `atos`
 * `dwarfdump --lookup`
+* `dyldinfo --export`
 
 http://wiki.dwarfstd.org/index.php?title=Apple's_%22Lazy%22_DWARF_Scheme
