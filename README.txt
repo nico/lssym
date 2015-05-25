@@ -58,6 +58,7 @@ Related tools
 
 * `dyldinfo` can show relocation info (`man dyldinfo` works, but dyldinfo isn't
   in my path for some reason -- `xcrun dyldinfo` finds it though)
+  - e.g. -exports, -opcodes, ...
 * `dwarfdump` shows dwarf debug data
 * `dsymutil` can show symbol tables (`-s`) and link dwarf debug info from .o
   files into a single .dSYM file.
@@ -66,6 +67,6 @@ Related tools
 * `dwarfdump --file-stats lssym`
 * `atos`
 * `dwarfdump --lookup`
-* `dyldinfo --export`
+* run programs with `DYLD_PRINT_STATISTICS=1` set (see `man dyld` for more flags)
 
 http://wiki.dwarfstd.org/index.php?title=Apple's_%22Lazy%22_DWARF_Scheme
