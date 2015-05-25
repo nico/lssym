@@ -56,6 +56,8 @@ performance).
 Related tools
 -------------
 
+* `dyldinfo` can show relocation info (`man dyldinfo` works, but dyldinfo isn't
+  in my path for some reason -- `xcrun dyldinfo` finds it though)
 * `dwarfdump` shows dwarf debug data
 * `dsymutil` can show symbol tables (`-s`) and link dwarf debug info from .o
   files into a single .dSYM file.
