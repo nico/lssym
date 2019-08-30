@@ -189,6 +189,7 @@ static void dump(struct mach_header* header) {
       case LC_BUILD_VERSION: cmdnam = "LC_BUILD_VERSION"; break;
       case LC_SEGMENT_64: cmdnam = "LC_SEGMENT_64"; break;
       case LC_DYLD_INFO: cmdnam = "LC_DYLD_INFO"; break;
+      case LC_DYLD_INFO_ONLY: cmdnam = "LC_DYLD_INFO_ONLY"; break;
       case LC_SYMTAB: cmdnam = "LC_SYMTAB"; break;
       case LC_DYSYMTAB: cmdnam = "LC_DYSYMTAB"; break;
       case LC_LOAD_DYLINKER: cmdnam = "LC_LOAD_DYLINKER"; break;
