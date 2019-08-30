@@ -45,6 +45,17 @@ static void dump_segment(struct segment_command_64* cmd, uint8_t* data0) {
     for (int i = 0; i < sizeof(sect->sectname) && sect->sectname[i]; ++i)
       printf("%c", sect->sectname[i]);
     printf("\n");
+
+    printf("    addr: %llu\n", sect->addr);
+    printf("    size: %llu\n", sect->size);
+    printf("    offset: %u\n", sect->offset);
+    printf("    align: 2^%u\n", sect->align);
+    printf("    reloff: %u\n", sect->reloff);
+    printf("    nreloc: %u\n", sect->nreloc);
+    printf("    flags: 0x%x\n", sect->flags);
+    printf("    reserved1: %u\n", sect->reserved1);
+    printf("    reserved2: %u\n", sect->reserved2);
+    printf("    reserved3: %u\n", sect->reserved3);
   }
 }
 
