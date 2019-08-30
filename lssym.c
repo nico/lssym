@@ -50,7 +50,7 @@ static void dump_segment(struct segment_command_64* cmd, uint8_t* data0) {
            sect->addr, sect->size, sect->offset, sect->align);
     printf("    reloff: %7u  nreloc: %7u  flags: 0x%08x\n", sect->reloff,
            sect->nreloc, sect->flags);
-    printf("    reserved1: %4u  reserved2: %4u  reserved3: %4u\n",
+    printf("    reserved1: %4u  reserved2: %4u  reserved3: %6u\n",
            sect->reserved1, sect->reserved2, sect->reserved3);
   }
 }
