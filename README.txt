@@ -59,6 +59,8 @@ Related tools
 * `dyldinfo` can show relocation info (`man dyldinfo` works, but dyldinfo isn't
   in my path for some reason -- `xcrun dyldinfo` finds it though)
   - e.g. -exports, -opcodes, ...
+* `dyld_info` is apparently different from `dyldinfo`, and can print chained
+  relocs, dependent librarys, opcodes, ... (and it doesn't need `xcrun`)
 * `dwarfdump` shows dwarf debug data
 * `dsymutil` can show symbol tables (`-s`) and link dwarf debug info from .o
   files into a single .dSYM file.
